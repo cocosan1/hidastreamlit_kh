@@ -164,6 +164,7 @@ df_month = pd.DataFrame(list(zip(\
     target_list2, snow_list, slast_list, jnow_list, jlast_list, target_diff_list, target_rate_list,\
         sales_diff_list, sales_rate_list)), columns=columns_list, index=month_list)
 
+
 #***********************************出荷ベース可視化
 #グラフ用にintのデータを用意
 df_month2 = df_month.copy()
