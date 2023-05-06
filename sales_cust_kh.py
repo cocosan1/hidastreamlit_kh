@@ -24,7 +24,7 @@ pd.options.display.float_format = '{:.1f}'.format
 cwd = os.path.dirname(__file__)
 
 #**********************gdriveからエクセルファイルのダウンロード・df化
-fname_list = ['79s', '79j', '78j']
+fname_list = ['79s', '79j', '78j', '前期北日本j']
 for fname in fname_list:
     # Google Drive APIを使用するための認証情報を取得する
     creds_dict = st.secrets["gcp_service_account"]
@@ -79,6 +79,11 @@ path_jlast = os.path.join(cwd, 'data', '78j.xlsx')
 df_jlast = pd.read_excel(
     path_jlast, sheet_name='受注委託移動在庫生産照会', usecols=[3, 6, 15, 16, 45]) #index　ナンバー不要　index_col=0
 
+# ***前期受注年間***
+path_jlast_full = os.path.join(cwd, 'data', '前期北日本j.xlsx')
+df_jlast_full = pd.read_excel(
+    path_jlast_full, sheet_name='受注委託移動在庫生産照会', usecols=[3, 6, 15, 16, 45])
+
 # *** 出荷月、受注月列の追加***
 df_snow['出荷月'] = df_snow['出荷日'].dt.month
 df_snow['受注月'] = df_snow['受注日'].dt.month
@@ -88,6 +93,8 @@ df_jnow['出荷月'] = df_jnow['出荷日'].dt.month
 df_jnow['受注月'] = df_jnow['受注日'].dt.month
 df_jlast['出荷月'] = df_jlast['出荷日'].dt.month
 df_jlast['受注月'] = df_jlast['受注日'].dt.month
+df_jlast_full['出荷月'] = df_jlast_full['出荷日'].dt.month
+df_jlast_full['受注月'] = df_jlast_full['受注日'].dt.month
 
 # ***INT型への変更***
 df_snow[['金額', '出荷月', '受注月']] = df_snow[[\
@@ -103,9 +110,9 @@ df_jnow[['金額', '出荷月', '受注月']] = df_jnow[[\
 df_jlast[['金額', '出荷月', '受注月']] = df_jlast[[\
     '金額', '出荷月', '受注月']].fillna(0).astype('int64')
 #fillna　０で空欄を埋める
-
-# df_jnow = df_jnow[df_jnow['営業担当コード']==952]
-# df_jlast = df_jlast[df_jlast['営業担当コード']==952]
+df_jlast_full[['金額', '出荷月', '受注月']] = df_jlast_full[[\
+    '金額', '出荷月', '受注月']].fillna(0).astype('int64')
+#fillna　０で空欄を埋める
 
 #目標
 target_list = [9000000, 10600000, 10300000, 7900000, 8600000, 9100000, \
@@ -113,7 +120,7 @@ target_list = [9000000, 10600000, 10300000, 7900000, 8600000, 9100000, \
 
 def tif():
     month_list = [10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-    columns_list = ['受注/今期', '受注/前期', '対前年差', '対前年比']
+    columns_list = ['受注/今期', '受注/前期', '受注/前期年間','対前年差', '対前年比']
     cust_list = [
         '㈱東京ｲﾝﾃﾘｱ 仙台港本店', '㈱東京ｲﾝﾃﾘｱ 福島店', '㈱東京ｲﾝﾃﾘｱ 郡山店', '㈱東京ｲﾝﾃﾘｱ いわき店', \
         '㈱東京ｲﾝﾃﾘｱ 山形店'
@@ -121,23 +128,27 @@ def tif():
 
     jnow_list = []
     jlast_list = []
+    jlast_full_list = []
     sales_diff_list = []
     sales_rate_list = []
 
     for cust in cust_list:
         df_jnow2 = df_jnow[df_jnow['得意先名']==cust]
         df_jlast2 = df_jlast[df_jlast['得意先名']==cust]
+        df_jlast_full2 = df_jlast_full[df_jlast_full['得意先名']==cust]
         target_num = 0
         for month in month_list:
             target = target_list[target_num]
             jnow = df_jnow2[df_jnow2['受注月'].isin([month])]['金額'].sum()
             jlast = df_jlast2[df_jlast2['受注月'].isin([month])]['金額'].sum()
+            jlast_full = df_jlast_full2[df_jlast_full2['受注月'].isin([month])]['金額'].sum()
             
             sales_diff = jnow - jlast
             sales_rate = f'{jnow / jlast * 100: 0.1f} %'
 
             jnow_list.append('{:,}'.format(jnow))
             jlast_list.append('{:,}'.format(jlast))
+            jlast_full_list.append('{:,}'.format(jlast_full))
 
             sales_diff_list.append('{:,}'.format(sales_diff))
             sales_rate_list.append(sales_rate)
@@ -145,11 +156,12 @@ def tif():
             target_num += 1
 
         df_month = pd.DataFrame(list(zip(\
-            jnow_list, jlast_list, sales_diff_list, sales_rate_list)), \
+            jnow_list, jlast_list, jlast_full_list, sales_diff_list, sales_rate_list)), \
                 columns=columns_list, index=month_list)
         
         jnow_list = []
         jlast_list = []
+        jlast_full_list = []
         sales_diff_list = []
         sales_rate_list = []
     
@@ -158,14 +170,15 @@ def tif():
         df_month2 = df_month.copy()
 
         #グラフ用にint化
-        df_month2['受注/今期2'] = df_month2['受注/今期'].apply(lambda x: int(x.replace(',', '')))
-        df_month2['受注/前期2'] = df_month2['受注/前期'].apply(lambda x: int(x.replace(',', '')))
+        df_month2['受注/今期2'] = df_month2['受注/今期'].apply(lambda x: x.replace(',', '')).astype('int')
+        df_month2['受注/前期2'] = df_month2['受注/前期'].apply(lambda x: x.replace(',', '')).astype('int')
+        df_month2['受注/前期年間2'] = df_month2['受注/前期年間'].apply(lambda x: x.replace(',', '')).astype('int')
 
         st.write(f'受注ベース/売上: {cust}')
         #グラフを描くときの土台となるオブジェクト
         fig3 = go.Figure()
         #今期のグラフの追加
-        for col in df_month2.columns[4: 6]:
+        for col in df_month2.columns[5: 8]:
             fig3.add_trace(
                 go.Scatter(
                     x=['10月', '11月', '12月', '1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月'], #strにしないと順番が崩れる
@@ -190,16 +203,16 @@ def tif():
         #グラフ用にint化
         df_month2['累計/受注/今期2'] = df_month2['受注/今期2'].cumsum()
         df_month2['累計/受注/前期2'] = df_month2['受注/前期2'].cumsum()
+        df_month2['累計/受注/前期年間2'] = df_month2['受注/前期年間2'].cumsum()
 
         #table用にdiffとrate追加
         df_month2['累計/前年差'] = df_month2['累計/受注/今期2'] - df_month2['累計/受注/前期2']
         df_month2['累計/前年比'] = df_month2['累計/受注/今期2'] / df_month2['累計/受注/前期2']
 
-
         #グラフを描くときの土台となるオブジェクト
         fig4 = go.Figure()
         #今期のグラフの追加
-        for col in df_month2.columns[6:8]:
+        for col in df_month2.columns[8:11]:
             fig4.add_trace(
                 go.Scatter(
                     x=['10月', '11月', '12月', '1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月'], #strにしないと順番が崩れる
@@ -225,7 +238,7 @@ def tif():
             st.table(df_temp) 
 def tif2():
     month_list = [10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-    columns_list = ['受注/今期', '受注/前期', '対前年差', '対前年比']
+    columns_list = ['受注/今期', '受注/前期', '受注/前期年間', '対前年差', '対前年比']
     cust_list = [
         '㈱東京ｲﾝﾃﾘｱ 下田店', '㈱東京ｲﾝﾃﾘｱ 秋田店', '㈱東京ｲﾝﾃﾘｱ 盛岡店',
         '㈱東京ｲﾝﾃﾘｱ 仙台泉店', '㈱東京ｲﾝﾃﾘｱ 仙台南店'
@@ -233,23 +246,27 @@ def tif2():
 
     jnow_list = []
     jlast_list = []
+    jlast_full_list = []
     sales_diff_list = []
     sales_rate_list = []
 
     for cust in cust_list:
         df_jnow2 = df_jnow[df_jnow['得意先名']==cust]
         df_jlast2 = df_jlast[df_jlast['得意先名']==cust]
+        df_jlast_full2 = df_jlast_full[df_jlast_full['得意先名']==cust]
         target_num = 0
         for month in month_list:
             target = target_list[target_num]
             jnow = df_jnow2[df_jnow2['受注月'].isin([month])]['金額'].sum()
             jlast = df_jlast2[df_jlast2['受注月'].isin([month])]['金額'].sum()
+            jlast_full = df_jlast_full2[df_jlast_full2['受注月'].isin([month])]['金額'].sum()
             
             sales_diff = jnow - jlast
             sales_rate = f'{jnow / jlast * 100: 0.1f} %'
 
             jnow_list.append('{:,}'.format(jnow))
             jlast_list.append('{:,}'.format(jlast))
+            jlast_full_list.append('{:,}'.format(jlast_full))
 
             sales_diff_list.append('{:,}'.format(sales_diff))
             sales_rate_list.append(sales_rate)
@@ -257,11 +274,12 @@ def tif2():
             target_num += 1
 
         df_month = pd.DataFrame(list(zip(\
-            jnow_list, jlast_list, sales_diff_list, sales_rate_list)), \
+            jnow_list, jlast_list, jlast_full_list, sales_diff_list, sales_rate_list)), \
                 columns=columns_list, index=month_list)
         
         jnow_list = []
         jlast_list = []
+        jlast_full_list = []
         sales_diff_list = []
         sales_rate_list = []
     
@@ -270,14 +288,15 @@ def tif2():
         df_month2 = df_month.copy()
 
         #グラフ用にint化
-        df_month2['受注/今期2'] = df_month2['受注/今期'].apply(lambda x: int(x.replace(',', '')))
-        df_month2['受注/前期2'] = df_month2['受注/前期'].apply(lambda x: int(x.replace(',', '')))
+        df_month2['受注/今期2'] = df_month2['受注/今期'].apply(lambda x: x.replace(',', '')).astype('int')
+        df_month2['受注/前期2'] = df_month2['受注/前期'].apply(lambda x: x.replace(',', '')).astype('int')
+        df_month2['受注/前期年間2'] = df_month2['受注/前期年間'].apply(lambda x: x.replace(',', '')).astype('int')
 
         st.write(f'受注ベース/売上: {cust}')
         #グラフを描くときの土台となるオブジェクト
         fig3 = go.Figure()
         #今期のグラフの追加
-        for col in df_month2.columns[4: 6]:
+        for col in df_month2.columns[5: 8]:
             fig3.add_trace(
                 go.Scatter(
                     x=['10月', '11月', '12月', '1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月'], #strにしないと順番が崩れる
@@ -302,16 +321,16 @@ def tif2():
         #グラフ用にint化
         df_month2['累計/受注/今期2'] = df_month2['受注/今期2'].cumsum()
         df_month2['累計/受注/前期2'] = df_month2['受注/前期2'].cumsum()
+        df_month2['累計/受注/前期年間2'] = df_month2['受注/前期年間2'].cumsum()
 
         #table用にdiffとrate追加
         df_month2['累計/前年差'] = df_month2['累計/受注/今期2'] - df_month2['累計/受注/前期2']
         df_month2['累計/前年比'] = df_month2['累計/受注/今期2'] / df_month2['累計/受注/前期2']
 
-
         #グラフを描くときの土台となるオブジェクト
         fig4 = go.Figure()
         #今期のグラフの追加
-        for col in df_month2.columns[6:8]:
+        for col in df_month2.columns[8:11]:
             fig4.add_trace(
                 go.Scatter(
                     x=['10月', '11月', '12月', '1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月'], #strにしないと順番が崩れる
@@ -338,30 +357,34 @@ def tif2():
 
 def senmon():
     month_list = [10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-    columns_list = ['受注/今期', '受注/前期', '対前年差', '対前年比']
+    columns_list = ['受注/今期', '受注/前期', '受注/前期年間', '対前年差', '対前年比']
     cust_list = [
         '（有）ケンポク家具', '株式会社丸ほん', 'ラボット・プランナー株式会社', '㈱家具のオツタカ'
     ]
 
     jnow_list = []
     jlast_list = []
+    jlast_full_list = []
     sales_diff_list = []
     sales_rate_list = []
 
     for cust in cust_list:
         df_jnow2 = df_jnow[df_jnow['得意先名']==cust]
         df_jlast2 = df_jlast[df_jlast['得意先名']==cust]
+        df_jlast_full2 = df_jlast_full[df_jlast_full['得意先名']==cust]
         target_num = 0
         for month in month_list:
             target = target_list[target_num]
             jnow = df_jnow2[df_jnow2['受注月'].isin([month])]['金額'].sum()
             jlast = df_jlast2[df_jlast2['受注月'].isin([month])]['金額'].sum()
+            jlast_full = df_jlast_full2[df_jlast_full2['受注月'].isin([month])]['金額'].sum()
             
             sales_diff = jnow - jlast
             sales_rate = f'{jnow / jlast * 100: 0.1f} %'
 
             jnow_list.append('{:,}'.format(jnow))
             jlast_list.append('{:,}'.format(jlast))
+            jlast_full_list.append('{:,}'.format(jlast_full))
 
             sales_diff_list.append('{:,}'.format(sales_diff))
             sales_rate_list.append(sales_rate)
@@ -369,11 +392,12 @@ def senmon():
             target_num += 1
 
         df_month = pd.DataFrame(list(zip(\
-            jnow_list, jlast_list, sales_diff_list, sales_rate_list)), \
+            jnow_list, jlast_list, jlast_full_list, sales_diff_list, sales_rate_list)), \
                 columns=columns_list, index=month_list)
         
         jnow_list = []
         jlast_list = []
+        jlast_full_list = []
         sales_diff_list = []
         sales_rate_list = []
     
@@ -382,14 +406,15 @@ def senmon():
         df_month2 = df_month.copy()
 
         #グラフ用にint化
-        df_month2['受注/今期2'] = df_month2['受注/今期'].apply(lambda x: int(x.replace(',', '')))
-        df_month2['受注/前期2'] = df_month2['受注/前期'].apply(lambda x: int(x.replace(',', '')))
+        df_month2['受注/今期2'] = df_month2['受注/今期'].apply(lambda x: x.replace(',', '')).astype('int')
+        df_month2['受注/前期2'] = df_month2['受注/前期'].apply(lambda x: x.replace(',', '')).astype('int')
+        df_month2['受注/前期年間2'] = df_month2['受注/前期年間'].apply(lambda x: x.replace(',', '')).astype('int')
 
         st.write(f'受注ベース/売上: {cust}')
         #グラフを描くときの土台となるオブジェクト
         fig3 = go.Figure()
         #今期のグラフの追加
-        for col in df_month2.columns[4: 6]:
+        for col in df_month2.columns[5: 8]:
             fig3.add_trace(
                 go.Scatter(
                     x=['10月', '11月', '12月', '1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月'], #strにしないと順番が崩れる
@@ -414,6 +439,7 @@ def senmon():
         #グラフ用にint化
         df_month2['累計/受注/今期2'] = df_month2['受注/今期2'].cumsum()
         df_month2['累計/受注/前期2'] = df_month2['受注/前期2'].cumsum()
+        df_month2['累計/受注/前期年間2'] = df_month2['受注/前期年間2'].cumsum()
 
         #table用にdiffとrate追加
         df_month2['累計/前年差'] = df_month2['累計/受注/今期2'] - df_month2['累計/受注/前期2']
@@ -422,7 +448,7 @@ def senmon():
         #グラフを描くときの土台となるオブジェクト
         fig4 = go.Figure()
         #今期のグラフの追加
-        for col in df_month2.columns[6:8]:
+        for col in df_month2.columns[8:11]:
             fig4.add_trace(
                 go.Scatter(
                     x=['10月', '11月', '12月', '1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月'], #strにしないと順番が崩れる
@@ -449,7 +475,7 @@ def senmon():
 
 def senmon2():
     month_list = [10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-    columns_list = ['受注/今期', '受注/前期', '対前年差', '対前年比']
+    columns_list = ['受注/今期', '受注/前期', '受注/前期年間', '対前年差', '対前年比']
     cust_list = [
         '青森木工商事㈱', '㈱七尾家具百貨店', '株式会社　かさい',
         '有限会社　木乃や家具', '㈱日進', '（有）遠野家具センター',
@@ -458,23 +484,27 @@ def senmon2():
 
     jnow_list = []
     jlast_list = []
+    jlast_full_list = []
     sales_diff_list = []
     sales_rate_list = []
 
     for cust in cust_list:
         df_jnow2 = df_jnow[df_jnow['得意先名']==cust]
         df_jlast2 = df_jlast[df_jlast['得意先名']==cust]
+        df_jlast_full2 = df_jlast_full[df_jlast_full['得意先名']==cust]
         target_num = 0
         for month in month_list:
             target = target_list[target_num]
             jnow = df_jnow2[df_jnow2['受注月'].isin([month])]['金額'].sum()
             jlast = df_jlast2[df_jlast2['受注月'].isin([month])]['金額'].sum()
+            jlast_full = df_jlast_full2[df_jlast_full2['受注月'].isin([month])]['金額'].sum()
             
             sales_diff = jnow - jlast
             sales_rate = f'{jnow / jlast * 100: 0.1f} %'
 
             jnow_list.append('{:,}'.format(jnow))
             jlast_list.append('{:,}'.format(jlast))
+            jlast_full_list.append('{:,}'.format(jlast_full))
 
             sales_diff_list.append('{:,}'.format(sales_diff))
             sales_rate_list.append(sales_rate)
@@ -482,11 +512,12 @@ def senmon2():
             target_num += 1
 
         df_month = pd.DataFrame(list(zip(\
-            jnow_list, jlast_list, sales_diff_list, sales_rate_list)), \
+            jnow_list, jlast_list, jlast_full_list, sales_diff_list, sales_rate_list)), \
                 columns=columns_list, index=month_list)
         
         jnow_list = []
         jlast_list = []
+        jlast_full_list = []
         sales_diff_list = []
         sales_rate_list = []
     
@@ -495,14 +526,15 @@ def senmon2():
         df_month2 = df_month.copy()
 
         #グラフ用にint化
-        df_month2['受注/今期2'] = df_month2['受注/今期'].apply(lambda x: int(x.replace(',', '')))
-        df_month2['受注/前期2'] = df_month2['受注/前期'].apply(lambda x: int(x.replace(',', '')))
+        df_month2['受注/今期2'] = df_month2['受注/今期'].apply(lambda x: x.replace(',', '')).astype('int')
+        df_month2['受注/前期2'] = df_month2['受注/前期'].apply(lambda x: x.replace(',', '')).astype('int')
+        df_month2['受注/前期年間2'] = df_month2['受注/前期年間'].apply(lambda x: x.replace(',', '')).astype('int')
 
         st.write(f'受注ベース/売上: {cust}')
         #グラフを描くときの土台となるオブジェクト
         fig3 = go.Figure()
         #今期のグラフの追加
-        for col in df_month2.columns[4: 6]:
+        for col in df_month2.columns[5: 8]:
             fig3.add_trace(
                 go.Scatter(
                     x=['10月', '11月', '12月', '1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月'], #strにしないと順番が崩れる
@@ -527,6 +559,7 @@ def senmon2():
         #グラフ用にint化
         df_month2['累計/受注/今期2'] = df_month2['受注/今期2'].cumsum()
         df_month2['累計/受注/前期2'] = df_month2['受注/前期2'].cumsum()
+        df_month2['累計/受注/前期年間2'] = df_month2['受注/前期年間2'].cumsum()
 
         #table用にdiffとrate追加
         df_month2['累計/前年差'] = df_month2['累計/受注/今期2'] - df_month2['累計/受注/前期2']
@@ -535,7 +568,7 @@ def senmon2():
         #グラフを描くときの土台となるオブジェクト
         fig4 = go.Figure()
         #今期のグラフの追加
-        for col in df_month2.columns[6:8]:
+        for col in df_month2.columns[8: 11]:
             fig4.add_trace(
                 go.Scatter(
                     x=['10月', '11月', '12月', '1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月'], #strにしないと順番が崩れる

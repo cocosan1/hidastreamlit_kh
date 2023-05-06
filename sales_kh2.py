@@ -8,13 +8,6 @@ import plotly.graph_objects as go
 import openpyxl
 import math
 
-# from pydrive.auth import GoogleAuth
-# from pydrive.drive import GoogleDrive
-# from oauth2client.service_account import ServiceAccountCredentials
-# from google.oauth2.service_account import Credentials
-# from pathlib2 import Path
-# import os
-
 import os
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
@@ -30,7 +23,7 @@ pd.options.display.float_format = '{:.2f}'.format
 cwd = os.path.dirname(__file__)
 
 #**********************gdriveからエクセルファイルのダウンロード・df化
-fname_list = ['79s', '79j', '78j']
+fname_list = ['79s', '79j', '78j', '前期北日本j']
 for fname in fname_list:
     # Google Drive APIを使用するための認証情報を取得する
     creds_dict = st.secrets["gcp_service_account"]
@@ -85,6 +78,11 @@ path_jlast = os.path.join(cwd, 'data', '78j.xlsx')
 df_jlast = pd.read_excel(
     path_jlast, sheet_name='受注委託移動在庫生産照会', usecols=[3, 6, 15, 16, 45]) #index　ナンバー不要　index_col=0
 
+# ***前期受注/年間***
+path_jlast_full = os.path.join(cwd, 'data', '前期北日本j.xlsx')
+df_jlast_full = pd.read_excel(
+    path_jlast_full, sheet_name='受注委託移動在庫生産照会', usecols=[3, 6, 15, 16, 45]) #index　ナンバー不要　index_col=0
+
 # *** 出荷月、受注月列の追加***
 df_snow['出荷月'] = df_snow['出荷日'].dt.month
 df_snow['受注月'] = df_snow['受注日'].dt.month
@@ -94,6 +92,8 @@ df_jnow['出荷月'] = df_jnow['出荷日'].dt.month
 df_jnow['受注月'] = df_jnow['受注日'].dt.month
 df_jlast['出荷月'] = df_jlast['出荷日'].dt.month
 df_jlast['受注月'] = df_jlast['受注日'].dt.month
+df_jlast_full['出荷月'] = df_jlast_full['出荷日'].dt.month
+df_jlast_full['受注月'] = df_jlast_full['受注日'].dt.month
 
 # ***INT型への変更***
 df_snow[['金額', '出荷月', '受注月']] = df_snow[[\
@@ -109,16 +109,20 @@ df_jnow[['金額', '出荷月', '受注月']] = df_jnow[[\
 df_jlast[['金額', '出荷月', '受注月']] = df_jlast[[\
     '金額', '出荷月', '受注月']].fillna(0).astype('int64')
 #fillna　０で空欄を埋める
+df_jlast_full[['金額', '出荷月', '受注月']] = df_jlast_full[[\
+    '金額', '出荷月', '受注月']].fillna(0).astype('int64')
+#fillna　０で空欄を埋める
 
 df_jnow = df_jnow[df_jnow['営業担当コード']==952]
 df_jlast = df_jlast[df_jlast['営業担当コード']==952]
+df_jlast_full = df_jlast_full[df_jlast_full['営業担当コード']==952]
 
 #目標
 target_list = [9000000, 10600000, 10300000, 7900000, 8600000, 9100000, \
           5500000, 6400000, 7100000, 8900000, 7500000,9100000] 
 
 month_list = [10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-columns_list = ['目標', '出荷/今期', '出荷/前期', '受注/今期', '受注/前期','対目標差', \
+columns_list = ['目標', '出荷/今期', '出荷/前期', '受注/今期', '受注/前期','受注/前期年間', '対目標差', \
                 '対目標比', '対前年差', '対前年比']
 
 target_list2 = [] #str化
@@ -126,6 +130,7 @@ snow_list = []
 slast_list = []
 jnow_list = []
 jlast_list = []
+jlast_full_list = []
 
 target_diff_list = []
 target_rate_list = []
@@ -139,6 +144,7 @@ for month in month_list:
     slast = df_slast[df_slast['出荷月'].isin([month])]['金額'].sum()
     jnow = df_jnow[df_jnow['受注月'].isin([month])]['金額'].sum()
     jlast = df_jlast[df_jlast['受注月'].isin([month])]['金額'].sum()
+    jlast_full = df_jlast_full[df_jlast_full['受注月'].isin([month])]['金額'].sum()
 
     target_diff = snow - target
     target_rate = f'{snow / target: 0.2f}'
@@ -151,6 +157,7 @@ for month in month_list:
     slast_list.append('{:,}'.format(slast))
     jnow_list.append('{:,}'.format(jnow))
     jlast_list.append('{:,}'.format(jlast))
+    jlast_full_list.append('{:,}'.format(jlast_full))
 
     target_diff_list.append('{:,}'.format(target_diff))
     target_rate_list.append(target_rate)
@@ -161,15 +168,16 @@ for month in month_list:
     target_num += 1
 
 df_month = pd.DataFrame(list(zip(\
-    target_list2, snow_list, slast_list, jnow_list, jlast_list, target_diff_list, target_rate_list,\
+    target_list2, snow_list, slast_list, jnow_list, jlast_list, jlast_full_list, target_diff_list, target_rate_list,\
         sales_diff_list, sales_rate_list)), columns=columns_list, index=month_list)
 
 
 #***********************************出荷ベース可視化
 #グラフ用にintのデータを用意
 df_month2 = df_month.copy()
-df_month2['目標2'] = df_month2['目標'].apply(lambda x: int(x.replace(',', '')))
-df_month2['出荷/今期2'] = df_month2['出荷/今期'].apply(lambda x: int(x.replace(',', '')))
+
+df_month2['目標2'] = df_month2['目標'].apply(lambda x: x.replace(',', '')).astype('int')
+df_month2['出荷/今期2'] = df_month2['出荷/今期'].apply(lambda x: x.replace(',', '')).astype('int')
 
 with st.expander('詳細', expanded=False):
     col_list = ['目標', '出荷/今期', '出荷/前期', '対目標差', '対目標比', '対前年差']
@@ -180,7 +188,7 @@ with st.expander('詳細', expanded=False):
 #グラフを描くときの土台となるオブジェクト
 fig = go.Figure()
 #今期のグラフの追加
-for col in df_month2.columns[9:11]:
+for col in df_month2.columns[10:12]:
     fig.add_trace(
         go.Scatter(
             x=['10月', '11月', '12月', '1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月'], #strにしないと順番が崩れる
@@ -221,7 +229,7 @@ with st.expander('詳細', expanded=False):
 #グラフを描くときの土台となるオブジェクト
 fig2 = go.Figure()
 #今期のグラフの追加
-for col in df_month2s.columns[11:13]:
+for col in df_month2s.columns[12:14]:
     fig2.add_trace(
         go.Scatter(
             x=['10月', '11月', '12月', '1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月'], #strにしないと順番が崩れる
@@ -242,14 +250,14 @@ st.plotly_chart(fig2, use_container_width=True)
 
 #*****受注ベース可視化
 #グラフ用にint化
-df_month2['受注/今期2'] = df_month2['受注/今期'].apply(lambda x: int(x.replace(',', '')))
-df_month2['受注/前期2'] = df_month2['受注/前期'].apply(lambda x: int(x.replace(',', '')))
+df_month2['受注/今期2'] = df_month2['受注/今期'].apply(lambda x: x.replace(',', '')).astype('int')
+df_month2['受注/前期2'] = df_month2['受注/前期'].apply(lambda x: x.replace(',', '')).astype('int')
+df_month2['受注/前期年間2'] = df_month2['受注/前期年間'].apply(lambda x: x.replace(',', '')).astype('int')
 
 df_month2['受注/前年差'] = df_month2['受注/今期2'] - df_month2['受注/前期2']
 df_month2['受注/前年比'] = df_month2['受注/今期2'] / df_month2['受注/前期2']
 
 df_month2['受注/前年比'] = df_month2['受注/前年比'].apply(lambda x: f'{x:.2f}')
-
 
 with st.expander('詳細', expanded=False):
     col_list = ['受注/今期', '受注/前期', '受注/前年差', '受注/前年比']
@@ -259,7 +267,7 @@ with st.expander('詳細', expanded=False):
 #グラフを描くときの土台となるオブジェクト
 fig3 = go.Figure()
 #今期のグラフの追加
-for col in df_month2.columns[11:13]:
+for col in df_month2.columns[12:15]:
     fig3.add_trace(
         go.Scatter(
             x=['10月', '11月', '12月', '1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月'], #strにしないと順番が崩れる
@@ -284,6 +292,7 @@ df_month2j = df_month2.copy()
 #グラフ用にint化
 df_month2j['累計/受注/今期2'] = df_month2j['受注/今期2'].cumsum()
 df_month2j['累計/受注/前期2'] = df_month2j['受注/前期2'].cumsum()
+df_month2j['累計/受注/前期年間2'] = df_month2j['受注/前期年間2'].cumsum()
 
 #累計集計
 df_month2j['累計/目標差'] = df_month2j['累計/受注/今期2'] - df_month2j['累計/受注/前期2']
@@ -296,10 +305,12 @@ with st.expander('詳細', expanded=False):
     df_temp = df_month2j[col_list]
     st.table(df_temp)
 
+st.write(df_month2j)
+
 #グラフを描くときの土台となるオブジェクト
 fig4 = go.Figure()
 #今期のグラフの追加
-for col in df_month2j.columns[15:17]:
+for col in df_month2j.columns[17:20]:
     fig4.add_trace(
         go.Scatter(
             x=['10月', '11月', '12月', '1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月'], #strにしないと順番が崩れる
