@@ -305,8 +305,6 @@ with st.expander('詳細', expanded=False):
     df_temp = df_month2j[col_list]
     st.table(df_temp)
 
-st.write(df_month2j)
-
 #グラフを描くときの土台となるオブジェクト
 fig4 = go.Figure()
 #今期のグラフの追加
