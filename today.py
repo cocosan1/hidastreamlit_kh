@@ -23,7 +23,7 @@ pd.options.display.float_format = '{:.2f}'.format
 cwd = os.path.dirname(__file__)
 
 #**********************gdriveからエクセルファイルのダウンロード・df化
-fname ='79j'
+fname ='kita79j'
 
 # Google Drive APIを使用するための認証情報を取得する
 creds_dict = st.secrets["gcp_service_account"]
@@ -58,7 +58,7 @@ else:
 
 #************************ファイルのdf化・加工
 # ***今期受注***
-path_now = os.path.join(cwd, 'data', '79j.xlsx')
+path_now = os.path.join(cwd, 'data', 'kita79j.xlsx')
 df_now = pd.read_excel(
     path_now, sheet_name='受注委託移動在庫生産照会', \
         usecols=[3, 6, 8, 10, 14, 15, 16, 45]) #index　ナンバー不要　index_col=0
