@@ -195,7 +195,6 @@ def age_series():
         st.write('構成比')
         graph.make_pie(s_30d, s_30d.index)
     
-    st.divider()
     #40代
     st.markdown('##### ■ 40代')
     #living
@@ -228,7 +227,6 @@ def age_series():
         st.write('構成比')
         graph.make_pie(s_40d, s_40d.index)
     
-    st.divider()
     #50代
     st.markdown('##### ■ 50代')
     #living
