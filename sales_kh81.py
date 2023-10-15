@@ -23,7 +23,7 @@ pd.options.display.float_format = '{:.2f}'.format
 cwd = os.path.dirname(__file__)
 
 #**********************gdriveからエクセルファイルのダウンロード・df化
-fname_list = ['81s', 'kita79j', 'kita78j', '前期北日本j']
+fname_list = ['81s', 'kita79j', 'kita78j', '北日本80期j']
 for fname in fname_list:
     # Google Drive APIを使用するための認証情報を取得する
     creds_dict = st.secrets["gcp_service_account"]
@@ -79,7 +79,7 @@ df_jlast = pd.read_excel(
     path_jlast, sheet_name='受注委託移動在庫生産照会', usecols=[3, 6, 15, 16, 45]) #index　ナンバー不要　index_col=0
 
 # ***前期受注/年間***
-path_jlast_full = os.path.join(cwd, 'data', '前期北日本j.xlsx')
+path_jlast_full = os.path.join(cwd, 'data', '北日本80期j.xlsx')
 df_jlast_full = pd.read_excel(
     path_jlast_full, sheet_name='受注委託移動在庫生産照会', usecols=[3, 6, 15, 16, 45]) #index　ナンバー不要　index_col=0
 

@@ -23,7 +23,7 @@ pd.options.display.float_format = '{:.2f}'.format
 cwd = os.path.dirname(__file__)
 
 #**********************gdriveからエクセルファイルのダウンロード・df化
-fname_list = ['79s', 'kita79j', 'kita78j', '前期北日本j']
+fname_list = ['81s', 'kita79j', 'kita78j', '北日本80期j']
 for fname in fname_list:
     # Google Drive APIを使用するための認証情報を取得する
     creds_dict = st.secrets["gcp_service_account"]
@@ -58,7 +58,7 @@ for fname in fname_list:
 
 #************************ファイルのdf化・加工
 # ***今期出荷***
-path_snow = os.path.join(cwd, 'data', '79s.xlsx')
+path_snow = os.path.join(cwd, 'data', '81s.xlsx')
 df_snow = pd.read_excel(
     path_snow, sheet_name='受注委託移動在庫生産照会', usecols=[3, 6, 15, 16, 45]) #index　ナンバー不要　index_col=0
 
@@ -79,7 +79,7 @@ df_jlast = pd.read_excel(
     path_jlast, sheet_name='受注委託移動在庫生産照会', usecols=[3, 6, 15, 16, 45]) #index　ナンバー不要　index_col=0
 
 # ***前期受注/年間***
-path_jlast_full = os.path.join(cwd, 'data', '前期北日本j.xlsx')
+path_jlast_full = os.path.join(cwd, 'data', '北日本80期j.xlsx')
 df_jlast_full = pd.read_excel(
     path_jlast_full, sheet_name='受注委託移動在庫生産照会', usecols=[3, 6, 15, 16, 45]) #index　ナンバー不要　index_col=0
 
@@ -118,8 +118,8 @@ df_jlast = df_jlast[df_jlast['営業担当コード']==952]
 df_jlast_full = df_jlast_full[df_jlast_full['営業担当コード']==952]
 
 #目標
-target_list = [9000000, 10600000, 10300000, 7900000, 8600000, 9100000, \
-          5500000, 6400000, 7100000, 8900000, 7500000,9100000] 
+target_list = [7900000, 8900000, 8900000, 6000000, 7900000, 9900000,\
+           6200000, 6100000, 7000000, 6400000, 6100000, 7000000] 
 
 month_list = [10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 columns_list = ['目標', '出荷/今期', '出荷/前期', '受注/今期', '受注/前期','受注/前期年間', '対目標差', \
