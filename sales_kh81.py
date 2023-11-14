@@ -65,7 +65,7 @@ df_snow = pd.read_excel(
 
 # ***ファイル読み込み 前期出荷***
 df_slast = pd.read_excel(\
-    '79期出荷ALL星川.xlsx', sheet_name='受注委託移動在庫生産照会', \
+    '80期出荷ALL星川.xlsx', sheet_name='受注委託移動在庫生産照会', \
         usecols=[3, 6, 15, 16, 45]) #index　ナンバー不要　index_col=0
 
 # ***今期受注***
