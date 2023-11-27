@@ -84,7 +84,8 @@ start_date = st.sidebar.date_input(
 )
 end_date = st.sidebar.date_input(
     'データ終了日',
-    datetime.datetime(2023, 6, 30)
+    # datetime.datetime(2023, 6, 30)
+    datetime.datetime.today()
 )
 
 start_date = pd.to_datetime(start_date)
@@ -266,8 +267,23 @@ def suii_month():
     s_40 = df_40.groupby('受注月')['金額'].sum()
     s_50 = df_50.groupby('受注月')['金額'].sum()
 
-    ages = [s_30, s_40, s_50]
-    graph.make_line(ages, ['30', '40', '50'], s_50.index)
+    # df化
+    df30 = pd.DataFrame(s_30)
+    df40 = pd.DataFrame(s_40)
+    df50 = pd.DataFrame(s_50)
+
+    # indexをキーにして横に結合
+    df_all = pd.merge(df30, df40, left_index=True, right_index=True, how='outer')
+    df_all = pd.merge(df_all, df50, left_index=True, right_index=True, how='outer')
+
+    # col名の変更
+    df_all.columns = ['30', '40', '50']
+    df_all = df_all.fillna(0)
+
+    st.write(df_all)
+
+    ages = [df_all['30'], df_all['40'], df_all['50']]
+    graph.make_line(ages, ['30', '40', '50'], df_all.index)
 
 
 def rep():
