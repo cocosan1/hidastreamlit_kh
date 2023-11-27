@@ -280,8 +280,6 @@ def suii_month():
     df_all.columns = ['30', '40', '50']
     df_all = df_all.fillna(0)
 
-    st.write(df_all)
-
     ages = [df_all['30'], df_all['40'], df_all['50']]
     graph.make_line(ages, ['30', '40', '50'], df_all.index)
 
