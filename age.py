@@ -5,6 +5,7 @@ import streamlit as st
 import plotly.figure_factory as ff
 import plotly.graph_objects as go
 import datetime
+from datetime import timedelta
 
 import os
 from google.oauth2 import service_account
@@ -12,6 +13,8 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
 from func_collection import Graph
+
+# pip install pandas numpy streamlit plotly google-oauth2-tool google-api-python-client openpyxl
 
 st.set_page_config(page_title='売り上げ分析（年齢層）')
 st.markdown('#### 売り上げ分析（年齢層）')
@@ -78,14 +81,18 @@ max_date = df['受注日'].max()
 
 st.sidebar.write(f'{min_date} - {max_date}')
 
+# 半年前を算出
+today = datetime.datetime.today()
+before180days = today - timedelta(days=180)
+
 start_date = st.sidebar.date_input(
     'データ開始日',
-    datetime.datetime(2023, 1, 1)
+    before180days
+    # datetime.datetime(2023, 1, 1)
 )
 end_date = st.sidebar.date_input(
     'データ終了日',
-    # datetime.datetime(2023, 6, 30)
-    datetime.datetime.today()
+    today
 )
 
 start_date = pd.to_datetime(start_date)
@@ -290,6 +297,11 @@ def rep():
     s_rep.sort_values(ascending=False, inplace=True)
 
     graph.make_bar(s_rep, s_rep.index)
+
+    # 年換算
+    st.write(df2)
+    span = df2['受注日'].max() - df2['受注日'].min()
+    st.write(df2['受注日'].dtype)
 
     
 
