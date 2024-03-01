@@ -16,7 +16,7 @@ from func_collection import Graph
 
 # pip install pandas numpy streamlit plotly google-oauth2-tool google-api-python-client openpyxl
 
-st.set_page_config(page_title='販売員分析')
+st.set_page_config(page_title='販売員分析', layout='wide')
 st.markdown('#### 販売員分析')
 
 #小数点以下１ケタ
@@ -168,10 +168,22 @@ def shop():
     # 販売した商品列の新設
     df2['商品分類'] = df2['cate'] + '_' + df['シリーズ名']
 
+    col1, col2 = st.columns(2)
+
     for rep in s_rep.index:
         _df = df2[df2['取引先担当']==rep]
-        st.write(rep)
-        graph.make_pie(_df['金額'], _df['商品分類'].unique())
+        # 商品分類毎に集計
+        _s = _df.groupby('商品分類')['金額'].sum()
+        
+        with col1:
+            with st.container(height=500):
+                st.write(rep)
+                graph.make_bar(_s, _s.index)
+
+        with col2:
+            with st.container(height=500):
+            
+                graph.make_pie(_s, _s.index)
     
     st.markdown('##### 月別販売員別売上')
 
@@ -226,6 +238,8 @@ def ranking():
     # 星川抜き
     df_nonkh = df_all2[df_all2['取引先担当'] != '星川']
     
+    st.write('店舗別分布/年換算')
+
     for shop in df_nonkh['得意先名'].unique():
         # 得意先名毎に集計
         _df = df_nonkh[df_nonkh['得意先名']== shop]
@@ -301,7 +315,7 @@ def ranking():
 
     df_calc = df_calc.T
     
-    st.write('構成比/全店')
+    st.write('構成比/全店/年換算')
     graph.make_bar(df_calc['販売員数'], df_calc.index)
 
     graph.make_pie(df_calc['販売員数'], df_calc.index)
