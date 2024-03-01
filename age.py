@@ -101,10 +101,8 @@ end_date = pd.to_datetime(end_date)
 df2 = df[(df['受注日'] >= start_date) & (df['受注日'] <= end_date)]
 
 # ***データ調整***
-df2 = df2.dropna(how='any') #一つでも欠損値のある行を削除　all　全て欠損値の行を削除
 df2['金額'] = df2['金額'].astype(int) #float →　int
 df2['受注月'] = pd.to_datetime(df2['受注日']).dt.strftime("%Y-%m")
-
 
 cates = []
 for cate in df2['商品分類名2']:
@@ -127,6 +125,7 @@ df_40 = df2[df2['年代']== 40]
 df_50 = df2[df2['年代']== 50]
 
 def age_whole():
+    df2 = df2.dropna(how='any') #一つでも欠損値のある行を削除　all　全て欠損値の行を削除
     
     #全体
     st.markdown('##### ■ 全体')
@@ -170,6 +169,8 @@ def age_whole():
 
 def age_series():
     st.markdown('##### 年齢層別シリーズ別')
+
+    df2 = df2.dropna(how='any') #一つでも欠損値のある行を削除　all　全て欠損値の行を削除
 
     #30代
     st.markdown('##### ■ 30代')
@@ -269,6 +270,8 @@ def age_series():
 
 def suii_month():
     st.markdown('##### 月別売上推移/年齢層')
+
+    df2 = df2.dropna(how='any') #一つでも欠損値のある行を削除　all　全て欠損値の行を削除
     
     s_30 = df_30.groupby('受注月')['金額'].sum()
     s_40 = df_40.groupby('受注月')['金額'].sum()
@@ -298,10 +301,35 @@ def rep():
 
     graph.make_bar(s_rep, s_rep.index)
 
-    # 年換算
-    st.write(df2)
-    span = df2['受注日'].max() - df2['受注日'].min()
-    st.write(df2['受注日'].dtype)
+    #データの期間取得
+    period = (df2['受注日'].max() - df2['受注日'].min()).days
+    #１年に対する比率
+    rate_temp = period / 365
+    #換算するために必要な率
+    year_rate = 1 / rate_temp
+    st.caption(f'１年に対する比率: {rate_temp} 年換算するため必要な率: {year_rate}')
+
+    df2['金額/年換算'] = df2['金額'] * year_rate 
+
+    st.markdown('##### 担当者別売上/年換算')
+    s_rep = df2.groupby('取引先担当')['金額/年換算'].sum()
+    s_rep.sort_values(ascending=False, inplace=True)
+
+    graph.make_bar(s_rep, s_rep.index)
+
+    # 月別販売者数
+    num_sales_dict = {}
+    for month in df2['受注月']:
+        temp_df = df2[df2['受注月']==month]
+        num_sales = temp_df['取引先担当'].nunique()
+        num_sales_dict[month] = num_sales
+    
+    df_num_sales = pd.DataFrame(num_sales_dict, index=['販売員数']).T
+
+    st.markdown('##### 月別販売員数')
+    graph.make_bar(df_num_sales['販売員数'], df_num_sales.index)
+
+        
 
     
 
