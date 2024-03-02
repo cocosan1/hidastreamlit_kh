@@ -240,6 +240,7 @@ def ranking():
     
     st.write('店舗別分布/年換算')
 
+    df_calc_all = pd.DataFrame()
     for shop in df_nonkh['得意先名'].unique():
         # 得意先名毎に集計
         _df = df_nonkh[df_nonkh['得意先名']== shop]
@@ -257,7 +258,7 @@ def ranking():
                 '50万未満': 0,
 
             },
-            index=['販売員数']
+            index=[shop]
         )
         for sale in _s:
             if sale >= 3000000:
@@ -276,10 +277,15 @@ def ranking():
                 df_calc['50万未満'] = df_calc['50万未満'] +1
 
         df_calc = df_calc.T
+
+        
+        df_calc_all = pd.concat([df_calc_all, df_calc], axis=1)
         
         st.write(shop)
-        graph.make_bar(df_calc['販売員数'], df_calc.index)
+        graph.make_bar(df_calc[shop], df_calc.index)
     
+    st.write('得意先別販売員分布一覧')
+    st.write(df_calc_all)
     
     # 販売員構成比/全店
     _s = df_nonkh.groupby('得意先名/担当者名')['金額/年換算'].sum()
@@ -319,13 +325,6 @@ def ranking():
     graph.make_bar(df_calc['販売員数'], df_calc.index)
 
     graph.make_pie(df_calc['販売員数'], df_calc.index)
-        
-
-
-
-
-
-
 
 def main():
     # アプリケーション名と対応する関数のマッピング
