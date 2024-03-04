@@ -124,7 +124,7 @@ df_30 = df2[df2['年代']== 30]
 df_40 = df2[df2['年代']== 40]
 df_50 = df2[df2['年代']== 50]
 
-def age_whole():
+def age_whole(df2):
     df2 = df2.dropna(how='any') #一つでも欠損値のある行を削除　all　全て欠損値の行を削除
     
     #全体
@@ -167,7 +167,7 @@ def age_whole():
         st.write('構成比')
         graph.make_pie(s_aged, s_aged.index)
 
-def age_series():
+def age_series(df2):
     st.markdown('##### 年齢層別シリーズ別')
 
     df2 = df2.dropna(how='any') #一つでも欠損値のある行を削除　all　全て欠損値の行を削除
@@ -268,7 +268,7 @@ def age_series():
         st.write('構成比')
         graph.make_pie(s_50d, s_50d.index)
 
-def suii_month():
+def suii_month(df2):
     st.markdown('##### 月別売上推移/年齢層')
 
     df2 = df2.dropna(how='any') #一つでも欠損値のある行を削除　all　全て欠損値の行を削除
@@ -294,7 +294,7 @@ def suii_month():
     graph.make_line(ages, ['30', '40', '50'], df_all.index)
 
 
-def rep():
+def rep(df2):
     st.markdown('##### 担当者別売上')
     s_rep = df2.groupby('取引先担当')['金額'].sum()
     s_rep.sort_values(ascending=False, inplace=True)
@@ -330,13 +330,6 @@ def rep():
     graph.make_bar(df_num_sales['販売員数'], df_num_sales.index)
 
         
-
-    
-
- 
-
-
-
 def main():
     # アプリケーション名と対応する関数のマッピング
     apps = {
@@ -361,7 +354,7 @@ def main():
 
     # 選択されたアプリケーションを処理する関数を呼び出す
     render_func = apps[selected_app_name]
-    render_func()
+    render_func(df2)
 
 if __name__ == '__main__':
     main()
