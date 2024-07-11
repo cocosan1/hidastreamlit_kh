@@ -1251,7 +1251,97 @@ if submitted:
         # 可視化
         make_bar_notnowlast(s_50d, '年齢層別売上/50代/dining', 'A535', 6, 5)
         make_pie(s_50d, s_50d.index, '年齢層別構成比/50代/dining', 'F535')
+    
 
+    #***********************************************年齢層月別推移
+    s_30 = df_30.groupby('受注月')['金額'].sum()
+    s_40 = df_40.groupby('受注月')['金額'].sum()
+    s_50 = df_50.groupby('受注月')['金額'].sum()
+
+    # df化
+    df30 = pd.DataFrame(s_30)
+    df40 = pd.DataFrame(s_40)
+    df50 = pd.DataFrame(s_50)
+
+    # indexをキーにして横に結合
+    df_all = pd.merge(df30, df40, left_index=True, right_index=True, how='outer')
+    df_all = pd.merge(df_all, df50, left_index=True, right_index=True, how='outer')
+
+    # col名の変更
+    df_all.columns = ['30', '40', '50']
+    df_all = df_all.fillna(0)
+
+    ages = [df_all['30'], df_all['40'], df_all['50']]
+
+    # 可視化
+
+    # figureオブジェクトを生成する
+    fig = plt.figure(figsize=(6, 4))
+
+    # axesオブジェクトをfigureオブジェクトに対して設定する
+    ax = fig.add_subplot(1, 1, 1)
+
+    len_df = len(df_all)
+
+    x = list(range(len_df))
+    month_list=['10月', '11月', '12月', '1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月']
+
+    month_list2 = month_list[0:len_df]
+    #strにしないと順番が崩れる
+
+    x = list(range(len_df))
+    ax.set_xticks(x)
+    ax.set_xticklabels(month_list2)
+
+    ax.plot(x, df_all['30'], marker='.', ls='-', lw=1, label='30代')
+    ax.plot(x, df_all['40'], marker='.', ls='--', lw=0.5, label='40代')
+    ax.plot(x, df_all['50'], marker='.', ls='--', lw=0.5, label='50代')
+    # ax.plot(x, df_now, marker='.', ls='-',lw=1, color='steelblue', label=label_now) #linestyle/linewidth
+    # ax.plot(x, df_target, marker='.', ls='--', lw=0.5, color='lightblue', label=label_target)
+
+    for i, (v30, v40, v50) in enumerate(zip(df_all['30'], df_all['40'], df_all['50'])):
+        val_30 = f'{v30/10000:.0f}'
+        val_40 = f'{v40/10000:.0f}'
+        val_50 = f'{v50/10000:.0f}'
+        ax.annotate(val_30, (i, v30), textcoords='offset points', xytext=(0,10), ha='center', va='top', fontsize=6)
+        ax.annotate(val_40, (i, v40), textcoords='offset points', xytext=(-10,0), ha='center', va='center', fontsize=6)
+        ax.annotate(val_50, (i, v50), textcoords='offset points', xytext=(0,-10), ha='center', va='bottom', fontsize=6)
+
+    #凡例
+    ax.legend(loc='upper right', fontsize=6)
+
+    #axの枠線の太さの設定
+    ax.spines['top'].set_linewidth(0.3)
+    ax.spines['bottom'].set_linewidth(0.3)
+    ax.spines['left'].set_linewidth(0.3)
+    ax.spines['right'].set_linewidth(0.3)
+
+    #軸のフォントサイズ設定
+    plt.xticks(fontsize=8)
+    plt.yticks(fontsize=8)
+
+    ax.set_title('月別年齢層推移')
+
+    plt.savefig('graph/fig.png')   # プロットしたグラフをファイルsin.pngに保存する
+    plt.close(fig)  # 図を閉じる
+
+    #excelへの貼り付け
+    #カレントディレクトリの画像指定
+    img_dir = 'graph/fig.png'
+
+    #画像オブジェクト作成
+    img = Image.open(img_dir)
+
+    #excelの読み込み
+    wb = openpyxl.load_workbook(target_file)
+    sh = wb['sheet1']
+
+    #シートへの貼り付け
+    img = openpyxl.drawing.image.Image(img_dir)
+    sh.add_image(img, 'A554')
+
+    wb.save(target_file)
+    wb.close()
 
     #***********************************************販売員分析
 
@@ -1262,8 +1352,8 @@ if submitted:
     df3['受注月'] = pd.to_datetime(df3['受注日']).dt.strftime("%Y-%m")
 
     # excelへの期間の入力
-    input_txt('E553', '2023-10-1')
-    input_txt('H553', max_date2)
+    input_txt('E592', '2023-10-1')
+    input_txt('H592', max_date2)
 
     # 販売員毎に集計
     s_rep = df3.groupby('取引先担当')['金額'].sum()
@@ -1274,8 +1364,8 @@ if submitted:
         
     else:
         # 可視化
-        make_bar_notnowlast(s_rep, '販売員別売上', 'A555', 6, 5)
-        make_pie(s_rep, s_rep.index, '販売員別売上構成比', 'F555')
+        make_bar_notnowlast(s_rep, '販売員別売上', 'A594', 6, 5)
+        make_pie(s_rep, s_rep.index, '販売員別売上構成比', 'F594')
 
     #***********************************************販売員分析/年換算
     
@@ -1296,8 +1386,8 @@ if submitted:
         
     else:
         # 可視化
-        make_bar_notnowlast(s_rep_year, '販売員別売上', 'A573', 6, 5)
-        make_pie(s_rep_year, s_rep_year.index, '販売員別売上構成比', 'F573')
+        make_bar_notnowlast(s_rep_year, '販売員別売上', 'A612', 6, 5)
+        make_pie(s_rep_year, s_rep_year.index, '販売員別売上構成比', 'F612')
     
     # 月別販売員数
     num_sales_dict = {}
@@ -1308,12 +1398,74 @@ if submitted:
     
     df_num_sales = pd.DataFrame(num_sales_dict, index=['販売員数']).T
 
-    if s_rep_year.empty:
-        input_txt('A595', '実績がありません。')
+    # figureオブジェクトを生成する
+    fig2 = plt.figure(figsize=(6, 4))
+
+    # axesオブジェクトをfigureオブジェクトに対して設定する
+    ax = fig2.add_subplot(1, 1, 1)
+
+    len_df = len(df_num_sales)
+
+    x = list(range(len_df))
+    month_list=['10月', '11月', '12月', '1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月']
+
+    month_list2 = month_list[0:len_df]
+    #strにしないと順番が崩れる
+
+    x = list(range(len_df))
+    ax.set_xticks(x)
+    ax.set_xticklabels(month_list2)
+
+    ax.plot(x, df_num_sales['販売員数'], marker='.', ls='-', lw=1, label='販売員数')
+    # ax.plot(x, df_now, marker='.', ls='-',lw=1, color='steelblue', label=label_now) #linestyle/linewidth
+    # ax.plot(x, df_target, marker='.', ls='--', lw=0.5, color='lightblue', label=label_target)
+
+    for i, num in enumerate(df_num_sales['販売員数']):
+
+        ax.annotate(num, (i, num), textcoords='offset points', xytext=(0,10), ha='center', va='top', fontsize=6)
+
+    #凡例
+    ax.legend(loc='upper right', fontsize=6)
+
+    #axの枠線の太さの設定
+    ax.spines['top'].set_linewidth(0.3)
+    ax.spines['bottom'].set_linewidth(0.3)
+    ax.spines['left'].set_linewidth(0.3)
+    ax.spines['right'].set_linewidth(0.3)
+
+    #軸のフォントサイズ設定
+    plt.xticks(fontsize=8)
+    plt.yticks(fontsize=8)
+
+    ax.set_title('月別販売者数推移')
+
+    plt.savefig('graph/fig.png')   # プロットしたグラフをファイルsin.pngに保存する
+    plt.close(fig)  # 図を閉じる
+
+    #excelへの貼り付け
+    #カレントディレクトリの画像指定
+    img_dir = 'graph/fig.png'
+
+    #画像オブジェクト作成
+    img = Image.open(img_dir)
+
+    #excelの読み込み
+    wb = openpyxl.load_workbook(target_file)
+    sh = wb['sheet1']
+
+    #シートへの貼り付け
+    img = openpyxl.drawing.image.Image(img_dir)
+    sh.add_image(img, 'A633')
+
+    wb.save(target_file)
+    wb.close()
+
+    # if s_rep_year.empty:
+    #     input_txt('A595', '実績がありません。')
         
-    else:
-        # 可視化
-        make_bar_notnowlast(df_num_sales['販売員数'], '月別販売員数', 'A594', 6, 5)
+    # else:
+    #     # 可視化
+    #     make_bar_notnowlast(df_num_sales['販売員数'], '月別販売員数', 'A594', 6, 5)
 
 
     with col3:

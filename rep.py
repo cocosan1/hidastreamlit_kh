@@ -201,7 +201,7 @@ def ranking():
         path_cust = os.path.join(cwd, 'data', f'{fname}.xlsx')
         df = pd.read_excel(
             path_cust, sheet_name='貼りつけ', usecols=[15, 16, 42, 43, 10, 50, 51]) #index　ナンバー不要　index_col=0
-        cust_name = fname.split('分析')[1]
+        cust_name = fname.split('_')[1]
 
         # 得意先名抽出
         df['得意先名'] = cust_name
