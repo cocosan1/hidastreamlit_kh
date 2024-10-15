@@ -24,7 +24,7 @@ pd.options.display.float_format = '{:.1f}'.format
 cwd = os.path.dirname(__file__)
 
 #**********************gdriveからエクセルファイルのダウンロード・df化
-fname_list = ['kita81s', 'kita79j', 'kita78j', '北日本80期j']
+fname_list = ['kita81s', 'kita79j', 'kita78j', 'kita81jALL']
 for fname in fname_list:
     # Google Drive APIを使用するための認証情報を取得する
     creds_dict = st.secrets["gcp_service_account"]
@@ -80,7 +80,7 @@ df_jlast = pd.read_excel(
     path_jlast, sheet_name='受注委託移動在庫生産照会', usecols=[3, 6, 15, 16, 45]) #index　ナンバー不要　index_col=0
 
 # ***前期受注年間***
-path_jlast_full = os.path.join(cwd, 'data', '北日本80期j.xlsx')
+path_jlast_full = os.path.join(cwd, 'data', 'kita81jALL.xlsx')
 df_jlast_full = pd.read_excel(
     path_jlast_full, sheet_name='受注委託移動在庫生産照会', usecols=[3, 6, 15, 16, 45])
 
@@ -359,7 +359,7 @@ def senmon():
     month_list = [10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     columns_list = ['受注/今期', '受注/前期', '受注/前期年間', '対前年差', '対前年比']
     cust_list = [
-        '（有）ケンポク家具', '株式会社丸ほん', 'ラボット・プランナー株式会社', '㈱家具のオツタカ'
+        '（有）ケンポク家具', 'ラボット・プランナー株式会社', '㈱家具のオツタカ'
     ]
 
     jnow_list = []
@@ -597,29 +597,37 @@ def target():
     month_list = [10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     columns_list = ['目標', '出荷/今期', '出荷/前期', '対目標差', '対目標比', '対前年差', '対前年比']
     cust_list = [
-        '㈱東京ｲﾝﾃﾘｱ 仙台港本店', 'ラボット・プランナー株式会社', '㈱家具のオツタカ',
-        '株式会社丸ほん', '（有）ケンポク家具'
+        '㈱東京ｲﾝﾃﾘｱ 仙台港本店', '㈱東京ｲﾝﾃﾘｱ 福島店', '㈱東京ｲﾝﾃﾘｱ 郡山店', '㈱東京ｲﾝﾃﾘｱ 山形店',
+        '（有）ケンポク家具', 'ラボット・プランナー株式会社', '㈱家具のオツタカ',
     ]
+
     sendaikou_target_list = [
-        1000000, 1200000, 1200000, 700000, 1000000, 1300000,
-    900000, 900000, 900000, 900000, 900000, 900000]
-    labo_target_list = [
-        1100000, 1200000, 1200000, 800000, 1100000, 1300000,
-    800000, 800000, 1000000, 900000, 900000, 900000]
-    otutaka_target_list = [
-        900000, 1000000, 1000000, 700000, 900000, 1000000,
-        700000, 700000, 800000, 800000, 700000, 800000
-    ]
-    maruhon_target_list = [
-        900000, 1000000, 1000000, 700000, 900000, 1100000,
-        700000, 700000, 800000, 700000, 700000, 800000
-    ]
+        1100000, 900000, 400000, 1200000, 900000, 500000,
+    1400000, 1400000, 900000, 1400000, 1200000, 800000]
+    fukushima_target_list = [
+        300000, 400000, 400000, 500000, 400000, 400000,
+    400000, 400000, 400000, 500000, 500000, 400000]
+    koriyama_target_list = [
+        500000, 200000, 400000, 800000, 300000, 600000,
+    200000, 200000, 600000, 200000, 600000, 400000]
+    yamagata_target_list = [
+        400000, 600000, 700000, 400000, 700000, 300000,
+    400000, 300000, 600000, 600000, 700000, 300000]
+
     kenpoku_target_list = [
-        1300000, 1500000, 1500000, 1000000, 1400000, 1700000,
-    1000000, 1000000, 1200000, 1100000, 1100000, 1200000]
+        1200000, 1700000, 1000000, 1200000, 900000, 1600000,
+    1700000, 700000, 1400000, 1500000, 600000, 1500000]
+    labo_target_list = [
+        900000, 1000000, 1500000, 1200000, 800000, 1200000,
+    1000000, 1500000, 1000000, 1800000, 1100000, 1000000]
+    otutaka_target_list = [
+        900000, 900000, 600000, 600000, 900000, 1000000,
+        900000, 1200000, 900000, 1300000, 900000, 900000
+    ]
+    
     target_all_list = [
-        sendaikou_target_list, labo_target_list, otutaka_target_list,
-        maruhon_target_list, kenpoku_target_list
+        sendaikou_target_list, fukushima_target_list, koriyama_target_list, yamagata_target_list,
+        kenpoku_target_list, labo_target_list, otutaka_target_list
         ]
 
     snow_list = []
