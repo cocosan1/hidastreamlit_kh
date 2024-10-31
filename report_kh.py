@@ -1414,7 +1414,7 @@ if submitted:
 
     x = list(range(len_df))
     ax.set_xticks(x)
-    ax.set_xticklabels(month_list2)
+    # ax.set_xticklabels(month_list2)
 
     ax.plot(x, df_num_sales['販売員数'], marker='.', ls='-', lw=1, label='販売員数')
     # ax.plot(x, df_now, marker='.', ls='-',lw=1, color='steelblue', label=label_now) #linestyle/linewidth
@@ -1460,12 +1460,12 @@ if submitted:
     wb.save(target_file)
     wb.close()
 
-    # if s_rep_year.empty:
-    #     input_txt('A595', '実績がありません。')
+    if s_rep_year.empty:
+        input_txt('A595', '実績がありません。')
         
-    # else:
-    #     # 可視化
-    #     make_bar_notnowlast(df_num_sales['販売員数'], '月別販売員数', 'A594', 6, 5)
+    else:
+        # 可視化
+        make_bar_notnowlast(df_num_sales['販売員数'], '月別販売員数', 'A594', 6, 5)
 
 
     with col3:
